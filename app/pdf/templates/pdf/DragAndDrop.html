@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Arrastra y Suelta - Testar{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Bienvenido</h1>
+    <p class="description">Sube un archivo PDF para testar.</p>
+
+    <!-- Área para arrastrar y soltar -->
+    <div id="drop-area">
+        <p>Arrastra y suelta un archivo PDF aquí o haz clic para seleccionar uno.</p>
+        <input type="file" id="file-input" name="file" accept=".pdf" style="display:none;">
+        <button id="file-select-button">Seleccionar Archivo</button>
+    </div>
+
+    <!-- Lista de archivos subidos -->
+    <h2>Archivos PDF Subidos</h2>
+
+    <ul>
+        {% for file in files %}
+            <li>
+                <a href="{{ url_for('pdf.uploaded_file', filename=file) }}">{{ file }}</a>
+
+                <form action="{% if request.path == url_for('pdf.impacto_ambiental') %}{{ url_for('pdf.testar_impacto', filename=file) }}{% else %}{{ url_for('pdf.testar_residuos', filename=file) }}{% endif %}" method="post" style="display:inline;">
+                    <button type="submit" class="btn-download">Testar</button>
+                </form>
+
+                <form action="{{ url_for('pdf.delete', filename=file) }}" method="post" style="display:inline;">
+                    <button type="submit" class="btn-delete">Borrar</button>
+                </form>
+
+                {% if file == 'testado.pdf' %}
+                    <a href="{{ url_for('pdf.view_testado') }}" class="btn btn-primary">Ver PDF Testado</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+    <script>
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const fileSelectButton = document.getElementById('file-select-button');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.classList.add('highlight');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.classList.remove('highlight');
+            }, false);
+        });
+
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+
+            handleFiles(files);
+        }
+
+        fileSelectButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', () => {
+            let files = fileInput.files;
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            Array.from(files).forEach(uploadFile);
+        }
+
+        function uploadFile(file) {
+            let formData = new FormData();
+            formData.append('file', file);
+
+            fetch('{{ url_for("pdf.upload") }}', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    console.log('Carga realizada con éxito');
+                    location.reload();
+                }
+            }).catch(error => {
+                console.error('Error en la carga:', error);
+            });
+        }
+    </script>
+
+<style>
+    .container {
+        text-align: center;
+        margin: 0 auto;
+        max-width: 800px;
+        padding: 20px;
+    }
+
+    h1 {
+        margin-bottom: 20px;
+    }
+
+    .description {
+        margin-bottom: 20px;
+    }
+
+    #drop-area {
+        border: 3px solid red;
+        border-radius: 12px;
+        background-color: #fff;
+        padding: 20px;
+        width: 100%;
+        max-width: 400px;
+        margin: 20px auto;
+        text-align: center;
+        transition: border-color 0.3s;
+    }
+
+    #drop-area.highlight {
+        border-color: #6c6;
+    }
+
+    #file-select-button {
+        background-color: #fff;
+        border: 3px solid red;
+        border-radius: 12px;
+        color: red;
+        font-size: 16px;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    #file-select-button:hover {
+        background-color: red;
+        color: #fff;
+    }
+
+    #file-select-button:focus {
+        outline: none;
+    }
+
+    .btn-download {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .btn-download:hover {
+        background-color: #fff;
+        color: #007bff;
+    }
+
+    .btn-delete {
+        background-color: red;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .btn-delete:hover {
+        background-color: #fff;
+        color: red;
+    }
+
+    .btn-delete:focus {
+        outline: none;
+    }
+</style>
+
+{% endblock %}

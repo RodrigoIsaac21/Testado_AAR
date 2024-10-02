@@ -1,0 +1,60 @@
+/* Estilo general para el cuerpo */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Estilo para el encabezado */
+header {
+    background-color: #333; /* Color de fondo oscuro para el encabezado */
+    color: #fff; /* Color de texto blanco */
+    padding: 10px 0; /* Espaciado vertical en el encabezado */
+}
+
+/* Estilo para la navegación */
+nav ul {
+    list-style-type: none; /* Quitar los puntos de la lista */
+    margin: 0; /* Eliminar margen */
+    padding: 0; /* Eliminar relleno */
+    display: flex; /* Usar flexbox para alineación horizontal */
+    align-items: center; /* Alinear elementos al centro verticalmente */
+}
+
+/* Estilo para los elementos de la lista dentro de la navegación */
+nav ul li {
+    margin-right: 20px; /* Espaciado a la derecha de cada elemento de la lista */
+}
+
+/* Estilo para los enlaces dentro de la navegación */
+nav ul li a {
+    color: #fff; /* Color del texto de los enlaces */
+    text-decoration: none; /* Quitar subrayado por defecto de los enlaces */
+}
+
+/* Estilo para el estado de sobrevuelo de los enlaces */
+nav ul li a:hover {
+    text-decoration: underline; /* Añadir subrayado al pasar el ratón sobre el enlace */
+}
+
+/* Estilo para el logo */
+.logo {
+    height: 50px; /* Ajusta el tamaño del logo según sea necesario */
+    vertical-align: middle; /* Alinear verticalmente el logo con el texto del enlace */
+}
+
+/* Estilo para el pie de página */
+footer {
+    background-color: #333; /* Color de fondo oscuro para el pie de página */
+    color: #fff; /* Color de texto blanco */
+    text-align: center; /* Alinear el texto al centro */
+    padding: 10px 0; /* Espaciado vertical en el pie de página */
+    position: fixed; /* Fijar el pie de página en la parte inferior */
+    width: 100%; /* Asegurar que el pie de página ocupe el ancho completo */
+    bottom: 0; /* Posicionar en la parte inferior de la ventana */
+}
+
+/* Estilo para el contenido principal */
+main {
+    padding: 20px; /* Espaciado alrededor del contenido principal */
+}
