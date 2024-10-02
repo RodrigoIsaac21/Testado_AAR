@@ -8,12 +8,12 @@ Name
 Address
 Phone number
 Email
-RFC (Tax Identification Number)
-CURP (Unique Population Registry Code)
+RFC 
+CURP
 
 Legal entity:
 Address
 Phone number
 Email
-RFC (Tax Identification Number)
-CURP (Unique Population Registry Code)
+RFC 
+CURP
