@@ -1,13 +1,21 @@
 from flask import Blueprint, render_template, request, redirect, url_for, send_file, send_from_directory
+from flask import send_file
+
 import os
-from .processing import TestarResiduosPeligrosos, DeleteQR, TestarImpactoAmbiental
+
+import io
+
+from .TestadoResiduosPeligrosos import TestarResiduosPeligrosos
+from .TestadoImpactoAmbiental import TestarImpactoAmbiental
+from .TestadoAtmosfera import TestarAtmosefera
+
+import zipfile
 
 pdf_bp = Blueprint('pdf', __name__, template_folder='templates/pdf')
 
 UPLOAD_FOLDER = os.path.abspath('app/uploads')
 ALLOWED_EXTENSIONS = {'pdf'}
 
-# Crear el directorio de subida si no existe
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -23,21 +31,21 @@ def index():
 
 @pdf_bp.route('/residuos-peligrosos')
 def residuos_peligrosos():
-    """ Ruta para mostrar la lista de archivos PDF subidos en DragAndDrop.html. """
     files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.pdf')]
-    return render_template('DragAndDrop.html', files=files)
+    file_count = len(files)
+    return render_template('DragAndDrop.html', files=files, file_count=file_count)
 
 @pdf_bp.route('/impacto-ambiental')
 def impacto_ambiental():
-    """ Ruta para mostrar la lista de archivos PDF subidos en DragAndDrop.html. """
     files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.pdf')]
-    return render_template('DragAndDrop.html', files=files)
+    file_count = len(files)
+    return render_template('DragAndDrop.html', files=files, file_count=file_count)
 
 @pdf_bp.route('/atmosfera')
 def atmosfera():
-    """ Ruta para mostrar la lista de archivos PDF subidos en DragAndDrop.html. """
     files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.pdf')]
-    return render_template('DragAndDrop.html', files=files)
+    file_count = len(files)
+    return render_template('DragAndDrop.html', files=files, file_count=file_count)
 
 @pdf_bp.route('/permisos')
 def permisos():
@@ -66,81 +74,48 @@ def uploaded_file(filename):
 
 @pdf_bp.route('/testar-residuos/<filename>', methods=['POST'])
 def testar_residuos(filename):
-    """ Ruta para procesar y modificar un archivo PDF. """
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    temp_output_path = os.path.join(UPLOAD_FOLDER, f'{os.path.splitext(filename)[0]}_temp.pdf')
-    final_output_path = os.path.join(UPLOAD_FOLDER, f'{os.path.splitext(filename)[0]}_testado.pdf')
-
-    # Crear una instancia de TestarResiduosPeligrosos
-    processor = TestarResiduosPeligrosos()
-    
-    # Procesar el PDF
     try:
-        # Procesar el PDF usando la clase TestarResiduosPeligrosos
-        processor.process_pdf(file_path, temp_output_path)
+        output = io.BytesIO()
+        processor = TestarResiduosPeligrosos()
+        processor.ProcessPDF(os.path.join(UPLOAD_FOLDER, filename), output)
+        output.seek(0)
 
-        # Pasar el archivo procesado a DeleteQR
-        delete_qr_processor = DeleteQR(temp_output_path, final_output_path)
-        delete_qr_processor.FindQRCoordinates()
-
-        # Enviar el archivo para descargar con el nuevo nombre
-        return send_file(final_output_path, as_attachment=True, download_name=f'{os.path.splitext(filename)[0]}_testado.pdf')
+        return send_file(output, as_attachment=True, download_name=f'{os.path.splitext(filename)[0]}_testado.pdf', mimetype='application/pdf')
     
     except Exception as e:
         print(f"Error al procesar el archivo: {e}")
         return redirect(url_for('pdf.residuos_peligrosos'))
-    
-
+ 
 @pdf_bp.route('/testar-impacto/<filename>', methods=['POST'])
 def testar_impacto(filename):
-    """ Ruta para procesar y modificar un archivo PDF de impacto ambiental. """
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    temp_output_path = os.path.join(UPLOAD_FOLDER, f'{os.path.splitext(filename)[0]}_temp.pdf')
-    final_output_path = os.path.join(UPLOAD_FOLDER, f'{os.path.splitext(filename)[0]}_testado.pdf')
-
-    # Crear una instancia de TestarImpactoAmbiental
-    processor = TestarImpactoAmbiental()
-    
-    # Procesar el PDF
     try:
-        # Procesar el PDF usando la clase TestarImpactoAmbiental
-        processor.ProcessPDF(file_path, final_output_path)  # Sin el archivo temporal
+        output = io.BytesIO()
+        processor = TestarImpactoAmbiental()
+        processor.ProcessPDF(os.path.join(UPLOAD_FOLDER, filename), output)
 
-        # Enviar el archivo para descargar con el nuevo nombre
-        return send_file(final_output_path, as_attachment=True, download_name=f'{os.path.splitext(filename)[0]}_impactado.pdf')
-    
+        output.seek(0)
+
+        return send_file(output, as_attachment=True, download_name=f'{os.path.splitext(filename)[0]}_impacto_testado.pdf', mimetype='application/pdf')
+
     except Exception as e:
         print(f"Error al procesar el archivo: {e}")
-        return redirect(url_for('pdf.mostrar_archivos'))  # Redirige a la función de mostrar archivos
+        return redirect(url_for('pdf.impacto_ambiental'))
 
-
-"""
 @pdf_bp.route('/testar-atmosfera/<filename>', methods=['POST'])
 def testar_atmosfera(filename):
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    temp_output_path = os.path.join(UPLOAD_FOLDER, f'{os.path.splitext(filename)[0]}_temp.pdf')
-    final_output_path = os.path.join(UPLOAD_FOLDER, f'{os.path.splitext(filename)[0]}_atmosferico.pdf')
-
-    # Crear una instancia de TestarAtmosfera
-    processor = TestarAtmosfera()
-    
-    # Procesar el PDF
     try:
-        processor.process_pdf(file_path, temp_output_path)
+        output = io.BytesIO()
 
-        # Pasar el archivo procesado a DeleteQR
-        delete_qr_processor = DeleteQR(temp_output_path, final_output_path)
-        delete_qr_processor.FindQRCoordinates()
+        processor = TestarAtmosefera()
+        processor.ProcessPDF(os.path.join(UPLOAD_FOLDER, filename), output)
 
-        # Enviar el archivo para descargar con el nuevo nombre
-        return send_file(final_output_path, as_attachment=True, download_name=f'{os.path.splitext(filename)[0]}_atmosferico.pdf')
-    
+        output.seek(0)
+
+        return send_file(output, as_attachment=True, download_name=f'{os.path.splitext(filename)[0]}_atmosfera_testado.pdf', mimetype='application/pdf')
+
     except Exception as e:
         print(f"Error al procesar el archivo: {e}")
-        return redirect(url_for('pdf.mostrar_archivos'))  # Redirige a la función de mostrar archivos
-"""
-
-
+        return redirect(url_for('pdf.atmosfera'))
 
 @pdf_bp.route('/delete/<filename>', methods=['POST'])
 def delete(filename):
@@ -152,4 +127,52 @@ def delete(filename):
             print(f"Archivo eliminado: {file_path}")
         except Exception as e:
             print(f"Error al eliminar el archivo: {e}")
-    return redirect(url_for('pdf.residuos_peligrosos'))
+
+    current_route = request.form.get('current_route', 'pdf.residuos_peligrosos') 
+    return redirect(url_for(current_route))
+
+
+@pdf_bp.route('/process_all', methods=['POST'])
+def process_all():
+    """ Procesar todos los PDFs según la ruta actual y guardarlos en un archivo ZIP. """
+    current_route = request.form.get('current_route', 'pdf.residuos_peligrosos')
+    files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.pdf')]
+
+    zip_output = io.BytesIO()
+    zip_filename = 'procesados.zip'
+
+    with zipfile.ZipFile(zip_output, 'w') as zip_file:
+        for filename in files:
+            try:
+                output = io.BytesIO()
+                
+                if current_route == 'pdf.residuos_peligrosos':
+                    processor = TestarResiduosPeligrosos()
+                elif current_route == 'pdf.impacto_ambiental':
+                    processor = TestarImpactoAmbiental()
+                elif current_route == 'pdf.atmosfera':
+                    processor = TestarAtmosefera()
+                else:
+                    continue 
+                
+                processor.ProcessPDF(os.path.join(UPLOAD_FOLDER, filename), output)
+
+                output.seek(0)
+                zip_file.writestr(f'{os.path.splitext(filename)[0]}_testado.pdf', output.read())
+                
+            except Exception as e:
+                print(f"Error al procesar el archivo {filename}: {e}")
+
+    zip_output.seek(0)
+    
+    return send_file(zip_output, as_attachment=True, download_name=zip_filename, mimetype='application/zip')
+
+
+@pdf_bp.route('/delete_all', methods=['POST'])
+def delete_all():
+    files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.pdf')]
+    for filename in files:
+        os.remove(os.path.join(UPLOAD_FOLDER, filename))
+        current_route = request.form.get('current_route', 'pdf.index')  
+    return redirect(url_for(current_route))
+

@@ -1,41 +1,49 @@
 {% extends "base.html" %}
 
-{% block title %}Arrastra y Suelta - Testar{% endblock %}
+{% block title %}Testar{% endblock %}
 
 {% block content %}
 <div class="container">
     <h1>Bienvenido</h1>
     <p class="description">Sube un archivo PDF para testar.</p>
 
-    <!-- Área para arrastrar y soltar -->
     <div id="drop-area">
         <p>Arrastra y suelta un archivo PDF aquí o haz clic para seleccionar uno.</p>
         <input type="file" id="file-input" name="file" accept=".pdf" style="display:none;">
         <button id="file-select-button">Seleccionar Archivo</button>
     </div>
 
-    <!-- Lista de archivos subidos -->
     <h2>Archivos PDF Subidos</h2>
+
+    {% if file_count >= 5 %}
+    <div class="button-group">
+        <form action="{{ url_for('pdf.process_all') }}" method="post" style="display: inline;">
+            <button type="submit" class="btn-download">Procesar Todos</button>
+        </form>
+        <form action="{{ url_for('pdf.delete_all') }}" method="post" style="display: inline;">
+            <input type="hidden" name="current_route" value="{{ request.endpoint }}">
+            <button type="submit" class="btn-delete">Borrar Todos</button>
+        </form>
+    </div>
+    {% endif %}
 
     <ul>
         {% for file in files %}
             <li>
                 <a href="{{ url_for('pdf.uploaded_file', filename=file) }}">{{ file }}</a>
-
-                <form action="{% if request.path == url_for('pdf.impacto_ambiental') %}{{ url_for('pdf.testar_impacto', filename=file) }}{% else %}{{ url_for('pdf.testar_residuos', filename=file) }}{% endif %}" method="post" style="display:inline;">
-                    <button type="submit" class="btn-download">Testar</button>
-                </form>
-
+                {% if file_count < 5 %}
+                    <form action="{% if request.path == url_for('pdf.impacto_ambiental') %}{{ url_for('pdf.testar_impacto', filename=file) }}{% elif request.path == url_for('pdf.atmosfera') %}{{ url_for('pdf.testar_atmosfera', filename=file) }}{% else %}{{ url_for('pdf.testar_residuos', filename=file) }}{% endif %}" method="post" style="display:inline;">
+                        <button type="submit" class="btn-download">Testar</button>
+                    </form>
+                {% endif %}
                 <form action="{{ url_for('pdf.delete', filename=file) }}" method="post" style="display:inline;">
+                    <input type="hidden" name="current_route" value="{{ request.endpoint }}">
                     <button type="submit" class="btn-delete">Borrar</button>
                 </form>
-
-                {% if file == 'testado.pdf' %}
-                    <a href="{{ url_for('pdf.view_testado') }}" class="btn btn-primary">Ver PDF Testado</a>
-                {% endif %}
             </li>
         {% endfor %}
     </ul>
+    
 </div>
 
     <script>
@@ -191,6 +199,17 @@
     .btn-delete:focus {
         outline: none;
     }
+    
+    .button-group {
+    display: flex;
+    justify-content: center; 
+    margin-top: 20px; 
+}
+
+.button-group form {
+    margin: 0 10px;
+}
+
 </style>
 
 {% endblock %}
