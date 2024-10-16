@@ -17,7 +17,7 @@
 
     {% if file_count >= 5 %}
     <div class="button-group">
-        <form action="{{ url_for('pdf.process_all') }}" method="post" style="display: inline;">
+        <form action="{% if request.path == url_for('pdf.impacto_ambiental') %}{{ url_for('pdf.process_all_impacto') }}{% elif request.path == url_for('pdf.atmosfera') %}{{ url_for('pdf.process_all_atmosfera') }}{% else %}{{ url_for('pdf.process_all_residuos') }}{% endif %}" method="post" style="display: inline;">
             <button type="submit" class="btn-download">Procesar Todos</button>
         </form>
         <form action="{{ url_for('pdf.delete_all') }}" method="post" style="display: inline;">

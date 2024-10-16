@@ -100,7 +100,6 @@ class TestarImpactoAmbiental:
         page.show_pdf_page(page.rect, new_pdf, 0) 
 
     def DeleteTextWithRegex(self, page, pattern):
-        """Removes text based on regex patterns on a page."""
         matches = re.findall(pattern, page.get_text(), re.IGNORECASE | re.MULTILINE)
         for match in matches:
             rects = page.search_for(match, quads=True)

@@ -38,21 +38,41 @@ class TestarAtmosefera:
         return patterns_found
 
     def DeleteTextByCoordinate(self, pdf_path, is_individual):
-        """Removes text in specific coordinates depending on the document type."""
         doc = fitz.open(pdf_path)
         page = doc[0]
 
+        y_offset = 0  
         if is_individual:
             text_rect = fitz.Rect(55, 180, 300, 265)
         else:
-            text_rect = fitz.Rect(55, 230, 400, 250)
+            text_rect = fitz.Rect(55, 220, 500, 240)
 
-        text_to_redact = page.get_text("text", clip=text_rect)
+        def adjust_coordinates(rect, offset):
+            return fitz.Rect(rect.x0, rect.y0 + offset, rect.x1, rect.y1 + offset)
+
+        text_to_redact = page.get_text("text", clip=text_rect).strip()
+
+        if "PPPP" in text_to_redact:
+            text_rect = adjust_coordinates(text_rect, -5) 
+
+        if "C.V." in text_to_redact:
+            text_rect = adjust_coordinates(text_rect, 5)  
+
+        keywords_positive = ["alcaldía", "municipio", "estado"]
+        keywords_negative = ["Calle", "pueblo", "estado"]
+
+        if not any(word in text_to_redact.lower() for word in keywords_positive):
+            text_rect = adjust_coordinates(text_rect, 5)  
+
+        if not any(word in text_to_redact.lower() for word in keywords_negative):
+            text_rect = adjust_coordinates(text_rect, -5)  
+
+        text_to_redact = page.get_text("text", clip=text_rect).strip() 
         if text_to_redact:
             page.add_redact_annot(text_rect, fill=(0, 0, 0))
 
         page.apply_redactions()
-        return doc  
+        return doc
 
     def RedactMatches(self, doc, is_individual):
         if not is_individual:
@@ -92,16 +112,20 @@ class TestarAtmosefera:
         can = canvas.Canvas(packet, pagesize=letter)
 
         if is_individual:
-            rect_x, rect_y, rect_width, rect_height = 55, 525, 300, 90
+            rect_x, rect_y, rect_width, rect_height = 450, 540, 200, 80
             text_lines = [
-                "Nombre, domicilio, teléfono y correo electrónico de Persona Física, art.",
-                "113, fracción I de la LFTAIP y art. 116, primer párrafo de la LGTAIP."
+                "Domicilio, teléfono y correo electrónico",
+                "del Representante Legal, art. 113,",
+                "fracción I de la LFTAIP",
+                "y art. 116, primer párrafo de la LGTAIP."
             ]
         else:
-            rect_x, rect_y, rect_width, rect_height = 55, 540, 345, 30
+            rect_x, rect_y, rect_width, rect_height = 450, 540, 200, 80
             text_lines = [
-                "Domicilio, teléfono y correo electrónico del Representante Legal, art. 113,",
-                "fracción I de la LFTAIP y art. 116, primer párrafo de la LGTAIP."
+                "Domicilio, teléfono y correo electrónico",
+                "del Representante Legal, art. 113,",
+                "fracción I de la LFTAIP",
+                "y art. 116, primer párrafo de la LGTAIP."
             ]
 
         can.setFillColor(black) 

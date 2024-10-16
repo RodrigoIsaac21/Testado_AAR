@@ -131,13 +131,20 @@ def delete(filename):
     current_route = request.form.get('current_route', 'pdf.residuos_peligrosos') 
     return redirect(url_for(current_route))
 
+@pdf_bp.route('/process_all_residuos', methods=['POST'])
+def process_all_residuos():
+    return process_all(TestarResiduosPeligrosos, 'pdf.residuos_peligrosos')
 
-@pdf_bp.route('/process_all', methods=['POST'])
-def process_all():
-    """ Procesar todos los PDFs según la ruta actual y guardarlos en un archivo ZIP. """
-    current_route = request.form.get('current_route', 'pdf.residuos_peligrosos')
+@pdf_bp.route('/process_all_impacto', methods=['POST'])
+def process_all_impacto():
+    return process_all(TestarImpactoAmbiental, 'pdf.impacto_ambiental')
+
+@pdf_bp.route('/process_all_atmosfera', methods=['POST'])
+def process_all_atmosfera():
+    return process_all(TestarAtmosefera, 'pdf.atmosfera')
+
+def process_all(processor_class, current_route):
     files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.pdf')]
-
     zip_output = io.BytesIO()
     zip_filename = 'procesados.zip'
 
@@ -145,26 +152,16 @@ def process_all():
         for filename in files:
             try:
                 output = io.BytesIO()
-                
-                if current_route == 'pdf.residuos_peligrosos':
-                    processor = TestarResiduosPeligrosos()
-                elif current_route == 'pdf.impacto_ambiental':
-                    processor = TestarImpactoAmbiental()
-                elif current_route == 'pdf.atmosfera':
-                    processor = TestarAtmosefera()
-                else:
-                    continue 
-                
+                processor = processor_class()  # Crea la instancia aquí
                 processor.ProcessPDF(os.path.join(UPLOAD_FOLDER, filename), output)
 
                 output.seek(0)
                 zip_file.writestr(f'{os.path.splitext(filename)[0]}_testado.pdf', output.read())
-                
             except Exception as e:
                 print(f"Error al procesar el archivo {filename}: {e}")
 
     zip_output.seek(0)
-    
+
     return send_file(zip_output, as_attachment=True, download_name=zip_filename, mimetype='application/zip')
 
 

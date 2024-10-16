@@ -1,3 +1,4 @@
+#TODO class to delete QR
 import fitz
 
 import io
